@@ -160,7 +160,7 @@ export default async function handler(
               <p><strong>Name:</strong> ${escapeHtml(name)}</p>
               <p><strong>Email:</strong> ${escapeHtml(email)}</p>
               <hr style="margin:24px 0;border:0;border-top:1px solid #ddd">
-              <div style="white-space:pre-wrap;overflow-wrap:anywhere"><b>Question asked in FAQ assistant:</b>${escapeHtml(message)}</div>
+              <div style="white-space:pre-wrap;overflow-wrap:anywhere"><b>Question asked in FAQ assistant:</b> ${escapeHtml(message)}</div>
             </div>
           </div>
         `,
