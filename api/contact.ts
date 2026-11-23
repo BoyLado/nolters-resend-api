@@ -178,8 +178,8 @@ export default async function handler(
       // Leave invalid or empty URLs unlinked.
     }
 
-    const replyUrl = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(
-      `Re: ${product ? `Inquiry about ${product}` : "Your website inquiry"}`,
+    const replyUrl = `mailto:${email}?subject=${encodeURIComponent(
+      product ? `Re: Inquiry about ${product}` : "Re: Your website inquiry",
     )}`;
 
     const emailResponse = await fetch("https://api.resend.com/emails", {
