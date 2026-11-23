@@ -301,10 +301,6 @@ export default async function handler(
                               </td>
                             </tr>
                           </table>
-
-                          <p style="margin:14px 0 0;color:#767676;font-size:12px;line-height:1.6;">
-                            You can also reply directly to this email.
-                          </p>
                         </td>
                       </tr>
 
