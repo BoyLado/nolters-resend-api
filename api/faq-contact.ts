@@ -346,10 +346,6 @@ export default async function handler(
                           </td>
                         </tr>
                       </table>
-
-                      <p style="margin:16px 0 0;color:#766e66;font-size:12px;line-height:1.7;overflow-wrap:anywhere;">
-                        Reply to ${safeEmail}, or use your inbox’s Reply button.
-                      </p>
                     </td>
                   </tr>
                 </table>
