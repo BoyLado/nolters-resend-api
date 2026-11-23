@@ -107,16 +107,14 @@ export default async function handler(
 
     const data = body as Record<string, unknown>;
 
-    if (
-      data.website !== undefined &&
-      typeof data.website !== "string"
-    ) {
+    if (data.website !== undefined && typeof data.website !== "string") {
       return response.status(400).json({
         ok: false,
         error: "invalid_fields",
       });
     }
 
+    // Honeypot: silently accept submissions from likely bots.
     if (typeof data.website === "string" && data.website.trim()) {
       return response.status(200).json({ ok: true });
     }
@@ -141,6 +139,17 @@ export default async function handler(
       });
     }
 
+    // Encode special characters while keeping the address's @ readable.
+    const recipient = encodeURIComponent(email).replace(/%40/gi, "@");
+    const replyUrl =
+      `mailto:${recipient}?subject=` +
+      encodeURIComponent("Re: Your FAQ inquiry");
+
+    const safeName = escapeHtml(name);
+    const safeEmail = escapeHtml(email);
+    const safeReplyUrl = escapeHtml(replyUrl);
+    const safeMessage = escapeHtml(message).replace(/\r\n|\r|\n/g, "<br>");
+
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -151,18 +160,146 @@ export default async function handler(
         from,
         to: [to],
         reply_to: email,
-        subject: "New website inquiry",
-        text: `Name: ${name}\nEmail: ${email}\n\n${message}`,
+        subject: "New FAQ assistant inquiry",
+
+        text: [
+          "New FAQ assistant inquiry",
+          "",
+          `Name: ${name}`,
+          `Email: ${email}`,
+          "",
+          "Question asked in FAQ assistant:",
+          message,
+        ].join("\n"),
+
         html: `
-          <div style="background:#f5f5f5;padding:24px;font-family:Arial,sans-serif">
-            <div style="max-width:600px;margin:0 auto;background:#fff;padding:32px;border-radius:12px;color:#222">
-              <h1 style="margin:0 0 24px;font-size:24px">New website inquiry</h1>
-              <p><strong>Name:</strong> ${escapeHtml(name)}</p>
-              <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-              <hr style="margin:24px 0;border:0;border-top:1px solid #ddd">
-              <div style="white-space:pre-wrap;overflow-wrap:anywhere"><b>Question asked in FAQ assistant:</b> ${escapeHtml(message)}</div>
-            </div>
-          </div>
+          <!DOCTYPE html>
+          <html lang="en">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>New FAQ assistant inquiry</title>
+            </head>
+
+            <body style="margin:0;padding:0;background-color:#f4f2ee;font-family:Arial,Helvetica,sans-serif;color:#242424;">
+              <table
+                role="presentation"
+                width="100%"
+                cellspacing="0"
+                cellpadding="0"
+                border="0"
+                style="background-color:#f4f2ee;"
+              >
+                <tr>
+                  <td align="center" style="padding:32px 12px;">
+                    <table
+                      role="presentation"
+                      width="100%"
+                      cellspacing="0"
+                      cellpadding="0"
+                      border="0"
+                      style="max-width:600px;background-color:#ffffff;border:1px solid #e7e2d9;border-radius:16px;"
+                    >
+                      <tr>
+                        <td style="padding:32px 24px;background-color:#242424;border-radius:16px 16px 0 0;">
+                          <p style="margin:0 0 12px;color:#dfc58e;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;">
+                            FAQ assistant
+                          </p>
+
+                          <h1 style="margin:0;color:#ffffff;font-size:28px;line-height:1.3;">
+                            New customer inquiry
+                          </h1>
+
+                          <p style="margin:12px 0 0;color:#dedede;font-size:14px;line-height:1.6;">
+                            A customer submitted a question through your store’s FAQ assistant.
+                          </p>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td style="padding:28px 24px;">
+                          <h2 style="margin:0 0 16px;color:#777064;font-size:12px;letter-spacing:1px;text-transform:uppercase;">
+                            Customer details
+                          </h2>
+
+                          <p style="margin:0 0 12px;font-size:15px;line-height:1.7;overflow-wrap:anywhere;word-break:break-word;">
+                            <strong>Name:</strong> ${safeName}
+                          </p>
+
+                          <p style="margin:0;font-size:15px;line-height:1.7;overflow-wrap:anywhere;word-break:break-word;">
+                            <strong>Email:</strong>
+                            <a
+                              href="${safeReplyUrl}"
+                              style="color:#675020;text-decoration:underline;"
+                            >${safeEmail}</a>
+                          </p>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td style="padding:0 24px 28px;">
+                          <table
+                            role="presentation"
+                            width="100%"
+                            cellspacing="0"
+                            cellpadding="0"
+                            border="0"
+                            style="table-layout:fixed;"
+                          >
+                            <tr>
+                              <td style="padding:20px;background-color:#f8f6f2;border-left:3px solid #a18449;border-radius:4px;">
+                                <p style="margin:0 0 12px;font-size:14px;line-height:1.6;">
+                                  <strong>Question asked in FAQ assistant:</strong>
+                                </p>
+
+                                <p style="margin:0;font-size:15px;line-height:1.8;overflow-wrap:anywhere;word-break:break-word;">
+                                  ${safeMessage}
+                                </p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td style="padding:0 24px 32px;">
+                          <table
+                            role="presentation"
+                            cellspacing="0"
+                            cellpadding="0"
+                            border="0"
+                          >
+                            <tr>
+                              <td
+                                align="center"
+                                bgcolor="#242424"
+                                style="border-radius:8px;"
+                              >
+                                <a
+                                  href="${safeReplyUrl}"
+                                  style="display:inline-block;padding:15px 24px;border:1px solid #242424;border-radius:8px;color:#ffffff;font-size:14px;font-weight:bold;text-decoration:none;"
+                                >
+                                  Reply to customer &rarr;
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
+
+                          <p style="margin:16px 0 0;color:#767676;font-size:12px;line-height:1.7;overflow-wrap:anywhere;">
+                            Reply to ${safeEmail}, or use your inbox’s Reply button.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <p style="margin:20px 0 0;color:#767676;font-size:12px;line-height:1.6;">
+                      Sent from your store’s FAQ assistant.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </body>
+          </html>
         `,
       }),
       signal: AbortSignal.timeout(10000),
