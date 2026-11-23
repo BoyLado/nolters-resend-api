@@ -123,8 +123,33 @@ export default async function handler(
 
     const name = typeof data.name === "string" ? data.name.trim() : "";
     const email = typeof data.email === "string" ? data.email.trim() : "";
-    const message =
-      typeof data.message === "string" ? data.message.trim() : "";
+    const message = typeof data.message === "string" ? data.message.trim() : "";
+
+    const productFields = {
+      product: 300,
+      option: 300,
+      sku: 200,
+      productUrl: 2048,
+    };
+
+    for (const [field, maxLength] of Object.entries(productFields)) {
+      const value = data[field];
+
+      if (
+        value !== undefined &&
+        (typeof value !== "string" || value.length > maxLength)
+      ) {
+        return response.status(400).json({
+          ok: false,
+          error: "invalid_fields",
+        });
+      }
+    }
+
+    const product = typeof data.product === "string" ? data.product.trim() : "";
+    const option = typeof data.option === "string" ? data.option.trim() : "";
+    const sku = typeof data.sku === "string" ? data.sku.trim() : "";
+    const productUrl = typeof data.productUrl === "string" ? data.productUrl.trim() : "";
 
     if (
       !name ||
@@ -141,6 +166,22 @@ export default async function handler(
       });
     }
 
+    let safeProductUrl = "";
+
+    try {
+      const url = new URL(productUrl);
+
+      if (url.protocol === "https:") {
+        safeProductUrl = url.href;
+      }
+    } catch {
+      // Leave invalid or empty URLs unlinked.
+    }
+
+    const replyUrl = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(
+      `Re: ${product ? `Inquiry about ${product}` : "Your website inquiry"}`,
+    )}`;
+
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -152,17 +193,131 @@ export default async function handler(
         to: [to],
         reply_to: email,
         subject: "New website inquiry",
-        text: `Name: ${name}\nEmail: ${email}\n\n${message}`,
+        text: [
+          `Name: ${name}`,
+          `Email: ${email}`,
+          `Message: ${message}`,
+          `Product: ${product || "—"}`,
+          `Option: ${option || "—"}`,
+          `SKU: ${sku || "—"}`,
+          `Product URL: ${productUrl || "—"}`,
+        ].join("\n"),
         html: `
-          <div style="background:#f5f5f5;padding:24px;font-family:Arial,sans-serif">
-            <div style="max-width:600px;margin:0 auto;background:#fff;padding:32px;border-radius:12px;color:#222">
-              <h1 style="margin:0 0 24px;font-size:24px">New website inquiry</h1>
-              <p><strong>Name:</strong> ${escapeHtml(name)}</p>
-              <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-              <hr style="margin:24px 0;border:0;border-top:1px solid #ddd">
-              <div style="white-space:pre-wrap;overflow-wrap:anywhere">${escapeHtml(message)}</div>
-            </div>
-          </div>
+          <!DOCTYPE html>
+          <html lang="en">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>New website inquiry</title>
+            </head>
+
+            <body style="margin:0;padding:0;background-color:#f4f2ee;font-family:Arial,Helvetica,sans-serif;color:#242424;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f4f2ee;">
+                <tr>
+                  <td align="center" style="padding:32px 12px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;background-color:#ffffff;border:1px solid #e7e2d9;border-radius:16px;">
+
+                      <tr>
+                        <td style="padding:32px 24px;background-color:#242424;border-radius:16px 16px 0 0;">
+                          <p style="margin:0 0 12px;color:#dfc58e;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;">
+                            Website contact form
+                          </p>
+                          <h1 style="margin:0;color:#ffffff;font-size:28px;line-height:1.3;">
+                            New inquiry
+                          </h1>
+                          <p style="margin:12px 0 0;color:#dedede;font-size:14px;line-height:1.6;">
+                            A customer reached out through your Shopify store.
+                          </p>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td style="padding:28px 24px;">
+                          <h2 style="margin:0 0 16px;color:#777064;font-size:12px;letter-spacing:1px;text-transform:uppercase;">
+                            Customer details
+                          </h2>
+
+                          <p style="margin:0 0 12px;font-size:15px;line-height:1.7;overflow-wrap:anywhere;">
+                            <strong>Name:</strong> ${escapeHtml(name)}
+                          </p>
+                          <p style="margin:0;font-size:15px;line-height:1.7;overflow-wrap:anywhere;">
+                            <strong>Email:</strong>
+                            <a href="${escapeHtml(replyUrl)}" style="color:#675020;text-decoration:underline;">
+                              ${escapeHtml(email)}
+                            </a>
+                          </p>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td style="padding:0 24px 28px;">
+                          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                            <tr>
+                              <td style="padding:20px;background-color:#f8f6f2;border-left:3px solid #a18449;border-radius:4px;">
+                                <p style="margin:0;font-size:15px;line-height:1.8;overflow-wrap:anywhere;word-break:break-word;">
+                                  <strong>Message:</strong><br>
+                                  ${escapeHtml(message).replace(/\r\n|\r|\n/g, "<br>")}
+                                </p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td style="padding:24px;border-top:1px solid #eeeae3;">
+                          <h2 style="margin:0 0 16px;color:#777064;font-size:12px;letter-spacing:1px;text-transform:uppercase;">
+                            Product details
+                          </h2>
+
+                          <p style="margin:0 0 12px;font-size:15px;line-height:1.7;overflow-wrap:anywhere;">
+                            <strong>Product:</strong> ${escapeHtml(product || "—")}
+                          </p>
+                          <p style="margin:0 0 12px;font-size:15px;line-height:1.7;overflow-wrap:anywhere;">
+                            <strong>Option:</strong> ${escapeHtml(option || "—")}
+                          </p>
+                          <p style="margin:0 0 12px;font-size:15px;line-height:1.7;overflow-wrap:anywhere;">
+                            <strong>SKU:</strong> ${escapeHtml(sku || "—")}
+                          </p>
+                          <p style="margin:0;font-size:14px;line-height:1.7;overflow-wrap:anywhere;word-break:break-word;">
+                            <strong>Product URL:</strong><br>
+                            ${
+                              safeProductUrl
+                                ? `<a href="${escapeHtml(safeProductUrl)}" style="color:#675020;text-decoration:underline;">${escapeHtml(safeProductUrl)}</a>`
+                                : escapeHtml(productUrl || "—")
+                            }
+                          </p>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td style="padding:4px 24px 32px;">
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                            <tr>
+                              <td align="center" bgcolor="#242424" style="border-radius:8px;">
+                                <a href="${escapeHtml(replyUrl)}" style="display:inline-block;padding:15px 24px;border:1px solid #242424;border-radius:8px;color:#ffffff;font-size:14px;font-weight:bold;text-decoration:none;">
+                                  Reply to customer &rarr;
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
+
+                          <p style="margin:14px 0 0;color:#767676;font-size:12px;line-height:1.6;">
+                            You can also reply directly to this email.
+                          </p>
+                        </td>
+                      </tr>
+
+                    </table>
+
+                    <p style="margin:20px 0 0;color:#767676;font-size:12px;line-height:1.6;">
+                      Sent from your store’s inquiry form.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </body>
+          </html>
         `,
       }),
       signal: AbortSignal.timeout(10000),
