@@ -130,6 +130,7 @@ export default async function handler(
       option: 300,
       sku: 200,
       productUrl: 2048,
+      productImage: 2048,
     };
 
     for (const [field, maxLength] of Object.entries(productFields)) {
@@ -150,6 +151,29 @@ export default async function handler(
     const option = typeof data.option === "string" ? data.option.trim() : "";
     const sku = typeof data.sku === "string" ? data.sku.trim() : "";
     const productUrl = typeof data.productUrl === "string" ? data.productUrl.trim() : "";
+
+    const productImage = typeof data.productImage === "string" ? data.productImage.trim() : "";
+
+    let safeProductImage = "";
+
+    try {
+      const url = new URL(productImage);
+
+      const allowedImageHosts = new Set([
+        "cdn.shopify.com",
+        ...allowedOrigins.map((value) => new URL(value).hostname),
+      ]);
+
+      if (
+        url.protocol === "https:" &&
+        !url.username &&
+        !url.password &&
+        !url.port &&
+        allowedImageHosts.has(url.hostname)
+      ) {
+        safeProductImage = url.href;
+      }
+    } catch {}
 
     if (
       !name ||
@@ -269,6 +293,25 @@ export default async function handler(
                           <h2 style="margin:0 0 16px;color:#777064;font-size:12px;letter-spacing:1px;text-transform:uppercase;">
                             Product details
                           </h2>
+
+                          ${
+                            safeProductImage
+                              ? `
+                                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                  <tr>
+                                    <td align="center" style="padding:0 0 20px;">
+                                      <img
+                                        src="${escapeHtml(safeProductImage)}"
+                                        alt="${escapeHtml(product)}"
+                                        width="280"
+                                        style="display:block;width:100%;max-width:280px;height:auto;border:0;border-radius:8px;"
+                                      >
+                                    </td>
+                                  </tr>
+                                </table>
+                              `
+                              : ""
+                          }
 
                           <p style="margin:0 0 12px;font-size:15px;line-height:1.7;overflow-wrap:anywhere;">
                             <strong>Product:</strong> ${escapeHtml(product || "—")}
