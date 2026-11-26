@@ -294,6 +294,24 @@ export default async function handler(
                             Product details
                           </h2>
 
+                          <p style="margin:0 0 12px;font-size:15px;line-height:1.7;overflow-wrap:anywhere;">
+                            <strong>Product:</strong> ${escapeHtml(product || "—")}
+                          </p>
+                          <p style="margin:0 0 12px;font-size:15px;line-height:1.7;overflow-wrap:anywhere;">
+                            <strong>Option:</strong> ${escapeHtml(option || "—")}
+                          </p>
+                          <p style="margin:0 0 12px;font-size:15px;line-height:1.7;overflow-wrap:anywhere;">
+                            <strong>SKU:</strong> ${escapeHtml(sku || "—")}
+                          </p>
+                          <p style="margin:0;font-size:14px;line-height:1.7;overflow-wrap:anywhere;word-break:break-word;">
+                            <strong>Product URL:</strong><br>
+                            ${
+                              safeProductUrl
+                                ? `<a href="${escapeHtml(safeProductUrl)}" style="color:#675020;text-decoration:underline;">${escapeHtml(safeProductUrl)}</a>`
+                                : escapeHtml(productUrl || "—")
+                            }
+                          </p>
+
                           ${
                             safeProductImage
                               ? `
@@ -313,23 +331,6 @@ export default async function handler(
                               : ""
                           }
 
-                          <p style="margin:0 0 12px;font-size:15px;line-height:1.7;overflow-wrap:anywhere;">
-                            <strong>Product:</strong> ${escapeHtml(product || "—")}
-                          </p>
-                          <p style="margin:0 0 12px;font-size:15px;line-height:1.7;overflow-wrap:anywhere;">
-                            <strong>Option:</strong> ${escapeHtml(option || "—")}
-                          </p>
-                          <p style="margin:0 0 12px;font-size:15px;line-height:1.7;overflow-wrap:anywhere;">
-                            <strong>SKU:</strong> ${escapeHtml(sku || "—")}
-                          </p>
-                          <p style="margin:0;font-size:14px;line-height:1.7;overflow-wrap:anywhere;word-break:break-word;">
-                            <strong>Product URL:</strong><br>
-                            ${
-                              safeProductUrl
-                                ? `<a href="${escapeHtml(safeProductUrl)}" style="color:#675020;text-decoration:underline;">${escapeHtml(safeProductUrl)}</a>`
-                                : escapeHtml(productUrl || "—")
-                            }
-                          </p>
                         </td>
                       </tr>
 
