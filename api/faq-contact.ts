@@ -156,6 +156,7 @@ export default async function handler(
       option: 500,
       sku: 200,
       productUrl: 2048,
+      productImage: 2048,
     };
 
     for (const [field, limit] of Object.entries(optionalFields)) {
@@ -172,18 +173,39 @@ export default async function handler(
       }
     }
 
-    const product =
-      typeof data.product === "string" ? data.product.trim() : "";
+    const product = typeof data.product === "string" ? data.product.trim() : "";
 
-    const option =
-      typeof data.option === "string" ? data.option.trim() : "";
+    const option = typeof data.option === "string" ? data.option.trim() : "";
 
     const sku = typeof data.sku === "string" ? data.sku.trim() : "";
 
-    const productUrl =
-      typeof data.productUrl === "string" ? data.productUrl.trim() : "";
+    const productUrl = typeof data.productUrl === "string" ? data.productUrl.trim() : "";
 
     const safeUrl = safeHttpsUrl(productUrl);
+
+    const productImage = typeof data.productImage === "string" ? data.productImage.trim() : "";
+
+    const allowedImageHosts = new Set(["cdn.shopify.com"]);
+
+    for (const allowedOrigin of allowedOrigins) {
+      const safeOrigin = safeHttpsUrl(allowedOrigin);
+
+      if (safeOrigin) {
+        allowedImageHosts.add(new URL(safeOrigin).hostname);
+      }
+    }
+
+    let safeProductImage = "";
+
+    const imageUrl = safeHttpsUrl(productImage);
+
+    if (imageUrl) {
+      const url = new URL(imageUrl);
+
+      if (!url.port && allowedImageHosts.has(url.hostname)) {
+        safeProductImage = url.href;
+      }
+    }
 
     const recipient = encodeURIComponent(email).replace(/%40/gi, "@");
 
@@ -199,7 +221,7 @@ export default async function handler(
       "<br>",
     );
 
-    const showProduct = Boolean(product || option || sku);
+    const showProduct = Boolean(product || option || sku || safeProductImage);
 
     const fieldRow = (label: string, value: string): string => `
       <p style="margin:0 0 12px;font-size:14px;line-height:1.7;overflow-wrap:anywhere;word-break:break-word;">
@@ -235,7 +257,7 @@ export default async function handler(
           <title>New FAQ assistant inquiry</title>
         </head>
 
-        <body style="margin:0;padding:0;background-color:#f5f1ea;font-family:Arial,Helvetica,sans-serif;color:#241d18;">
+        <body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;color:#241d18;">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f5f1ea;">
             <tr>
               <td align="center" style="padding:32px 12px;">
@@ -323,6 +345,25 @@ export default async function handler(
                                         : escapeHtml(productUrl)
                                     }
                                   </p>
+                                `
+                                : ""
+                            }
+
+                            ${
+                              safeProductImage
+                                ? `
+                                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                    <tr>
+                                      <td align="center" style="padding:0 0 20px;">
+                                        <img
+                                          src="${escapeHtml(safeProductImage)}"
+                                          alt="${escapeHtml(product || "Product image")}"
+                                          width="280"
+                                          style="display:block;width:100%;max-width:280px;height:auto;border:0;border-radius:8px;"
+                                        >
+                                      </td>
+                                    </tr>
+                                  </table>
                                 `
                                 : ""
                             }

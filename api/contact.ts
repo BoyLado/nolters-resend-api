@@ -235,7 +235,7 @@ export default async function handler(
               <title>New website inquiry</title>
             </head>
 
-            <body style="margin:0;padding:0;background-color:#f4f2ee;font-family:Arial,Helvetica,sans-serif;color:#242424;">
+            <body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;color:#242424;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f4f2ee;">
                 <tr>
                   <td align="center" style="padding:32px 12px;">
